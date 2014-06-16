@@ -1,16 +1,15 @@
+#!/usr/bin/python
 ############################################################
 #
 # PUHW Client2 - a simple console client for PUHW project
 #
 # Author:	Pawel Zadrozniak
-# version 1.01 (06/2014)
-#
-# note: this script requires "requests" library for Python
+# version 1.02 (06/2014)
 #
 ############################################################
 
 import json
-import requests
+import urllib, urllib2
 import sys
 import time
 import os
@@ -33,8 +32,10 @@ def anim():
 	os.system('cls' if os.name == 'nt' else 'clear')
 
 def json_get(url):
-	r = requests.get(url, timeout=3)
-	data=json.loads(r.text)
+	#r = requests.get(url, timeout=3)
+	url=url.replace(' ',"%20")
+	r=urllib2.urlopen(url, timeout=3).read()
+	data=json.loads(r)
 	return data;
 
 def get_hosts(mon_url):
@@ -87,13 +88,15 @@ def puhw_print(mon_url):
 		for sensor in sensors:
 			print "\tSENSOR:",sensor
 			metrics=get_metrics(mon_url,host,sensor)
-			for metric in metrics:
-				data=get_metric(mon_url,host,sensor,metric,1)
-				print "\t\tMETRIC:",metric,"\t\tVAL:",data[0].values()[0]
+			if isinstance(metrics,list):
+				for metric in metrics:
+					data=get_metric(mon_url,host,sensor,metric,1)
+					print "\t\tMETRIC:",metric,"\t\tVAL:",data[0].values()[0]
 
 def header():
 	os.system('cls' if os.name == 'nt' else 'clear')
-	sys.stdout.write(''.ljust(8,"\xdb")+"\xb2\xb2\xb1\xb1\xb0\xb0"+' PUHW console '+"\xb0\xb0\xb1\xb1\xb2\xb2"+''.ljust(45,"\xdb")+"\n")
+	#sys.stdout.write(''.ljust(8,"\xdb")+"\xb2\xb2\xb1\xb1\xb0\xb0"+' PUHW console '+"\xb0\xb0\xb1\xb1\xb2\xb2"+''.ljust(45,"\xdb")+"\n")
+	sys.stdout.write(''.ljust(10,"=")+"----"+' PUHW console '+"----"+''.ljust(47,"=")+"\n")
 def puhw_display(mon_url,sensor,metric):
 	hosts = get_hosts(mon_url)
 	if not isinstance(hosts,list):
@@ -124,7 +127,7 @@ def puhw_display(mon_url,sensor,metric):
 	print '====[ METRIC: '+ (sensor+'\\'+metric)[0:40].ljust(40) +' ]=====[ HOSTS: '+str(len(hosts))[0:4].ljust(4)+' ]==='
 	print ''
 	for host in valid_s:
-		sys.stdout.write('+ '+host[0:host_column].ljust(host_column+1)+valid[host]+"\n")
+		sys.stdout.write('- '+host[0:host_column].ljust(host_column+1)+valid[host]+"\n")
 	if len(valid): print ' '
 	for host in invalid:
 		sys.stdout.write('+ '+host[0:host_column].ljust(host_column+1)+"Invalid sensor/metric\n")
@@ -132,6 +135,9 @@ def puhw_display(mon_url,sensor,metric):
 
 def usage():
 	print "PUHW console client\nUSAGE:\n\tpuhwclient.py <MONITOR> - lists all available hosts and sensors\n\tpuhwclient.py <MONITOR> <SENSOR> <METRIC> [TIME] -\n\t      - displays information in [TIME] interval"
+
+	
+
 
 argc=len(sys.argv)
 if (argc<2 or argc==3):
